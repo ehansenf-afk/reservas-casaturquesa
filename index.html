@@ -110,24 +110,8 @@
     color: #003d42; letter-spacing: 1px; margin: 0;
   }
 
-  /* Fecha: pastillas horizontales scrolleables (compacto) */
-  .date-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; -webkit-overflow-scrolling: touch; }
-  .date-chip {
-    all: unset; box-sizing: border-box; flex: 0 0 auto; width: 56px; padding: 8px 0; border-radius: 14px;
-    border: 1.5px solid #dcd0bd; text-align: center; cursor: pointer;
-  }
-  .date-chip .dc-dow { display: block; font-size: 10px; text-transform: uppercase; color: #a9926f; }
-  .date-chip .dc-num { display: block; font-size: 16px; font-weight: 600; color: #2b2420; margin-top: 2px; }
-  .date-chip.selected { background: #007a8a; border-color: #007a8a; }
-  .date-chip.selected .dc-dow, .date-chip.selected .dc-num { color: #fff; }
-
-  /* Hora: grid compacto de pastillas */
-  .time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; }
-  .time-chip {
-    all: unset; box-sizing: border-box; width: 100%; padding: 8px 0; border-radius: 10px;
-    border: 1.5px solid #dcd0bd; font-size: 12.5px; color: #2b2420; cursor: pointer; text-align: center;
-  }
-  .time-chip.selected { background: #007a8a; border-color: #007a8a; color: #fff; font-weight: 600; }
+  /* Fecha y hora: input nativo del navegador (rueda nativa en celular, sin gastar espacio extra) */
+  input[type="date"], input[type="time"] { color: #2b2420; }
 
   /* Stepper de personas */
   .stepper { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
@@ -220,15 +204,18 @@
         </div>
         <input type="hidden" id="personas" value="2" required>
 
-        <label style="margin-top:20px;">Fecha</label>
-        <div class="date-scroll" id="dateScroll"></div>
-        <input type="hidden" id="fecha" required>
-        <div class="field-err" id="errFecha"></div>
-
-        <label style="margin-top:16px;">Hora</label>
-        <div class="time-grid" id="timeGrid"></div>
-        <input type="hidden" id="hora" required>
-        <div class="field-err" id="errHora"></div>
+        <div class="row">
+          <div>
+            <label>Fecha</label>
+            <input type="date" id="fecha" required>
+            <div class="field-err" id="errFecha"></div>
+          </div>
+          <div>
+            <label>Hora</label>
+            <input type="time" id="hora" required>
+            <div class="field-err" id="errHora"></div>
+          </div>
+        </div>
 
         <label style="margin-top:16px;">Comentario (opcional)</label>
         <input type="text" id="nota" placeholder="Alergias, mascota, etc.">
@@ -329,53 +316,13 @@ document.getElementById('personasMas').addEventListener('click', () => {
   document.getElementById('personas').value = personasN;
 });
 
-// --- Fecha: pastillas horizontales (próximos 21 días) ---
-const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+// --- Fecha y hora: inputs nativos ---
 const MESES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-const DOW = ['dom','lun','mar','mié','jue','vie','sáb'];
-const hoyDate = new Date();
-hoyDate.setHours(0,0,0,0);
-let fechaSeleccionada = null;
-
-const dateScroll = document.getElementById('dateScroll');
-for (let i = 0; i < 21; i++) {
-  const d = new Date(hoyDate);
-  d.setDate(d.getDate() + i);
-  const fechaISO = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  const chip = document.createElement('button');
-  chip.type = 'button';
-  chip.className = 'date-chip';
-  chip.innerHTML = '<span class="dc-dow">' + (i === 0 ? 'Hoy' : DOW[d.getDay()]) + '</span><span class="dc-num">' + d.getDate() + ' ' + MESES[d.getMonth()] + '</span>';
-  chip.addEventListener('click', () => {
-    fechaSeleccionada = fechaISO;
-    document.getElementById('fecha').value = fechaISO;
-    document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('selected'));
-    chip.classList.add('selected');
-    document.getElementById('errFecha').textContent = '';
-  });
-  dateScroll.appendChild(chip);
-}
-
-// --- Hora: grid compacto (horario del local: L-V 7:30-21:00, Sáb-Dom-Festivos 9:00-21:00) ---
-const HORAS = [];
-for (let h = 8; h <= 20; h++) {
-  HORAS.push(String(h).padStart(2,'0') + ':00');
-  if (h < 20) HORAS.push(String(h).padStart(2,'0') + ':30');
-}
-const timeGrid = document.getElementById('timeGrid');
-HORAS.forEach(hora => {
-  const chip = document.createElement('button');
-  chip.type = 'button';
-  chip.className = 'time-chip';
-  chip.textContent = hora;
-  chip.addEventListener('click', () => {
-    document.getElementById('hora').value = hora;
-    document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('selected'));
-    chip.classList.add('selected');
-    document.getElementById('errHora').textContent = '';
-  });
-  timeGrid.appendChild(chip);
-});
+const hoyISO = new Date().toISOString().split('T')[0];
+const fechaInput = document.getElementById('fecha');
+fechaInput.min = hoyISO;
+fechaInput.addEventListener('input', () => { document.getElementById('errFecha').textContent = ''; });
+document.getElementById('hora').addEventListener('input', () => { document.getElementById('errHora').textContent = ''; });
 
 // --- Envío + validación final ---
 document.getElementById('form').addEventListener('submit', async function(e) {
