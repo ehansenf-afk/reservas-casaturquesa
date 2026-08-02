@@ -320,9 +320,27 @@ document.getElementById('personasMas').addEventListener('click', () => {
 const MESES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const hoyISO = new Date().toISOString().split('T')[0];
 const fechaInput = document.getElementById('fecha');
+const horaInput = document.getElementById('hora');
 fechaInput.min = hoyISO;
-fechaInput.addEventListener('input', () => { document.getElementById('errFecha').textContent = ''; });
-document.getElementById('hora').addEventListener('input', () => { document.getElementById('errHora').textContent = ''; });
+
+// Feriados 2026 (Chile) - fines de semana y festivos abren desde las 10:00, resto del año desde las 8:00. Cierre 20:00 siempre.
+const FERIADOS_2026 = ['2026-01-01','2026-04-03','2026-04-04','2026-05-01','2026-05-21','2026-06-29','2026-08-15','2026-09-18','2026-09-19','2026-10-12','2026-11-01','2026-12-08','2026-12-25'];
+
+function actualizarRangoHorario() {
+  if (!fechaInput.value) return;
+  const d = new Date(fechaInput.value + 'T00:00:00');
+  const esFinde = d.getDay() === 0 || d.getDay() === 6;
+  const esFeriado = FERIADOS_2026.includes(fechaInput.value);
+  const apertura = (esFinde || esFeriado) ? '10:00' : '08:00';
+  horaInput.min = apertura;
+  horaInput.max = '20:00';
+}
+fechaInput.addEventListener('input', () => {
+  document.getElementById('errFecha').textContent = '';
+  actualizarRangoHorario();
+  if (horaInput.value && (horaInput.value < horaInput.min || horaInput.value > horaInput.max)) horaInput.value = '';
+});
+horaInput.addEventListener('input', () => { document.getElementById('errHora').textContent = ''; });
 
 // --- Envío + validación final ---
 document.getElementById('form').addEventListener('submit', async function(e) {
@@ -344,7 +362,13 @@ document.getElementById('form').addEventListener('submit', async function(e) {
   if (telefono.length < 8) { document.getElementById('errTelefono').textContent = 'Teléfono incompleto'; valido = false; }
   if (!correoValido(correo)) { document.getElementById('errCorreo').textContent = 'Ingresa un correo válido (ej. nombre@dominio.com)'; valido = false; }
   if (!fecha) { document.getElementById('errFecha').textContent = 'Elige una fecha'; valido = false; }
-  if (!hora) { document.getElementById('errHora').textContent = 'Elige una hora'; valido = false; }
+  if (!hora) {
+    document.getElementById('errHora').textContent = 'Elige una hora';
+    valido = false;
+  } else if (hora < horaInput.min || hora > horaInput.max) {
+    document.getElementById('errHora').textContent = 'Horario de atención: ' + horaInput.min + ' a ' + horaInput.max + ' hrs';
+    valido = false;
+  }
   if (!valido) {
     msg.textContent = 'Revisa los datos marcados en rojo.';
     msg.className = 'msg err';
@@ -383,6 +407,13 @@ document.getElementById('form').addEventListener('submit', async function(e) {
       body: JSON.stringify(body)
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+    // Dispara avisos inmediatos (WhatsApp equipo + WhatsApp cliente + correo). No bloquea la confirmación visual si tarda o falla.
+    fetch('https://mis-negocios-n8n.u7xiga.easypanel.host/webhook/confirmar-reserva', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_reserva: idReserva })
+    }).catch(() => {});
 
     const fechaObj = new Date(fecha + 'T00:00:00');
     const fechaLegible = fechaObj.getDate() + ' de ' + MESES_LARGO[fechaObj.getMonth()] + ' ' + fechaObj.getFullYear();
