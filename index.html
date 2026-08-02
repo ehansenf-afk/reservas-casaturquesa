@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reserva tu mesa — Casa Turquesa</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f5f1ea; color: #2b2420; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .card {
+    background: #fff; border-radius: 16px; max-width: 440px; width: 100%;
+    padding: 32px 28px; box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; color: #4a3728; }
+  p.sub { margin: 0 0 24px; color: #7a6a5c; font-size: 14px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; color: #4a3728; }
+  input, select {
+    width: 100%; padding: 10px 12px; border: 1px solid #d8cfc2; border-radius: 8px;
+    font-size: 15px; background: #faf8f5;
+  }
+  input:focus, select:focus { outline: none; border-color: #a97c50; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  button {
+    width: 100%; margin-top: 24px; padding: 13px; border: none; border-radius: 10px;
+    background: #a97c50; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .msg { margin-top: 16px; font-size: 14px; text-align: center; }
+  .msg.ok { color: #2e7d32; }
+  .msg.err { color: #c0392b; }
+  .success { text-align: center; }
+  .success .icon { font-size: 48px; margin-bottom: 8px; }
+  .code { font-size: 20px; font-weight: 700; color: #a97c50; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+    <h1>☕ Reserva tu mesa</h1>
+    <p class="sub">Casa Turquesa — Ortuzar 250, Ñuñoa</p>
+    <form id="form">
+      <label>Nombre completo</label>
+      <input type="text" id="nombre" required>
+
+      <label>RUT</label>
+      <input type="text" id="rut" placeholder="12.345.678-9" required>
+
+      <div class="row">
+        <div>
+          <label>Teléfono</label>
+          <input type="tel" id="telefono" placeholder="+56912345678" required>
+        </div>
+        <div>
+          <label>Personas</label>
+          <input type="number" id="personas" min="1" max="100" required>
+        </div>
+      </div>
+
+      <label>Correo electrónico</label>
+      <input type="email" id="correo" required>
+
+      <div class="row">
+        <div>
+          <label>Fecha</label>
+          <input type="date" id="fecha" required>
+        </div>
+        <div>
+          <label>Hora</label>
+          <input type="time" id="hora" required>
+        </div>
+      </div>
+
+      <label>Comentario (opcional)</label>
+      <input type="text" id="nota" placeholder="Alergias, mascota, etc.">
+
+      <button type="submit" id="btn">Confirmar reserva</button>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
+
+<script>
+const SUPABASE_URL = 'https://udsvumfwczyormmprizm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkc3Z1bWZ3Y3p5b3JtbXByaXptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MTg1MzgsImV4cCI6MjA5NTM5NDUzOH0.h3MzXhUrIkwssCCwWSohg9l40weroZUP81NJ3PLIAxE';
+
+function generarCodigo() {
+  const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let c = '';
+  for (let i = 0; i < 6; i++) c += letras[Math.floor(Math.random() * letras.length)];
+  return 'Coffee-' + c;
+}
+
+const params = new URLSearchParams(window.location.search);
+const plataformaOrigen = params.get('origen') === 'whatsapp' ? 'WhatsApp' : 'Instagram';
+
+document.getElementById('form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn');
+  const msg = document.getElementById('msg');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+  msg.textContent = '';
+  msg.className = 'msg';
+
+  const idReserva = generarCodigo();
+  const body = {
+    id_reserva: idReserva,
+    nombre_contacto: document.getElementById('nombre').value.trim(),
+    rut: document.getElementById('rut').value.trim(),
+    whatsapp_contacto: document.getElementById('telefono').value.trim(),
+    correo: document.getElementById('correo').value.trim().toLowerCase(),
+    personas: parseInt(document.getElementById('personas').value, 10),
+    fecha: document.getElementById('fecha').value,
+    hora: document.getElementById('hora').value,
+    nota: document.getElementById('nota').value.trim(),
+    plataforma: plataformaOrigen,
+    estado: 'activa'
+  };
+
+  try {
+    const resp = await fetch(SUPABASE_URL + '/rest/v1/reservas', {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: 'Bearer ' + SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify(body)
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+    document.getElementById('card').innerHTML = `
+      <div class="success">
+        <div class="icon">✅</div>
+        <h1>¡Reserva confirmada!</h1>
+        <p class="sub">Te esperamos en Casa Turquesa</p>
+        <p>Código de tu reserva:</p>
+        <p class="code">${idReserva}</p>
+        <p class="sub" style="margin-top:16px;">Guarda este código por si necesitas cancelar o modificar tu reserva.</p>
+      </div>`;
+  } catch (err) {
+    msg.textContent = 'Hubo un problema al confirmar tu reserva. Intenta de nuevo o escríbenos al WhatsApp +56 9 3499 0617.';
+    msg.className = 'msg err';
+    btn.disabled = false;
+    btn.textContent = 'Confirmar reserva';
+  }
+});
+
+const hoy = new Date().toISOString().split('T')[0];
+document.getElementById('fecha').min = hoy;
+</script>
+</body>
+</html>
