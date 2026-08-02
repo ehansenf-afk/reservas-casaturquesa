@@ -110,34 +110,52 @@
     color: #003d42; letter-spacing: 1px; margin: 0;
   }
 
-  /* Calendario visual */
-  .cal-box { margin-top: 18px; border: 1px solid #e6ded1; border-radius: 14px; padding: 16px; }
-  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .cal-month { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; color: #2b2013; text-transform: capitalize; }
-  .cal-nav { display: flex; gap: 6px; }
-  .cal-nav button {
-    all: unset; width: 26px; height: 26px; border-radius: 50%; display: flex;
-    align-items: center; justify-content: center; cursor: pointer; color: #007a8a;
-    font-size: 14px; background: #f2fbfa; margin: 0;
+  /* Fecha: pastillas horizontales scrolleables (compacto) */
+  .date-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; -webkit-overflow-scrolling: touch; }
+  .date-chip {
+    all: unset; box-sizing: border-box; flex: 0 0 auto; width: 56px; padding: 8px 0; border-radius: 14px;
+    border: 1.5px solid #dcd0bd; text-align: center; cursor: pointer;
   }
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
-  .cal-dow { font-size: 10px; color: #a9926f; text-transform: uppercase; padding: 4px 0 8px; }
-  .cal-day {
-    all: unset; box-sizing: border-box; width: 100%; aspect-ratio: 1; display: flex;
-    align-items: center; justify-content: center; border-radius: 50%; font-size: 13px;
-    color: #2b2420; cursor: pointer;
-  }
-  .cal-day.disabled { color: #d8cfc2; cursor: default; }
-  .cal-day.selected { background: #007a8a; color: #fff; font-weight: 600; }
-  .cal-day.empty { visibility: hidden; }
+  .date-chip .dc-dow { display: block; font-size: 10px; text-transform: uppercase; color: #a9926f; }
+  .date-chip .dc-num { display: block; font-size: 16px; font-weight: 600; color: #2b2420; margin-top: 2px; }
+  .date-chip.selected { background: #007a8a; border-color: #007a8a; }
+  .date-chip.selected .dc-dow, .date-chip.selected .dc-num { color: #fff; }
 
-  .time-box { margin-top: 4px; }
-  .time-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; -webkit-overflow-scrolling: touch; }
+  /* Hora: grid compacto de pastillas */
+  .time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; }
   .time-chip {
-    all: unset; box-sizing: border-box; flex: 0 0 auto; padding: 8px 14px; border-radius: 999px;
-    border: 1.5px solid #dcd0bd; font-size: 13px; color: #2b2420; cursor: pointer; white-space: nowrap;
+    all: unset; box-sizing: border-box; width: 100%; padding: 8px 0; border-radius: 10px;
+    border: 1.5px solid #dcd0bd; font-size: 12.5px; color: #2b2420; cursor: pointer; text-align: center;
   }
   .time-chip.selected { background: #007a8a; border-color: #007a8a; color: #fff; font-weight: 600; }
+
+  /* Stepper de personas */
+  .stepper { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+  .stepper button {
+    all: unset; width: 34px; height: 34px; border-radius: 50%; background: #f2fbfa;
+    color: #007a8a; font-size: 18px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; margin: 0; font-weight: 600;
+  }
+  .stepper span { font-size: 18px; font-weight: 600; min-width: 24px; text-align: center; }
+
+  .field-err { color: #b3352b; font-size: 11.5px; margin-top: 4px; min-height: 14px; }
+
+  /* Pantalla de éxito */
+  .success2 { padding: 30px 24px 40px; }
+  .success2 .icon2 {
+    width: 68px; height: 68px; border-radius: 50%; background: #007a8a; color: #fff;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; font-size: 30px;
+  }
+  .success2 h2 { text-align: center; font-family: 'Playfair Display', serif; font-size: 22px; margin: 0 0 4px; color: #2b2013; }
+  .success2 .sub2 { text-align: center; color: #8a7a68; font-size: 12.5px; margin: 0 0 20px; }
+  .success2 .id2 { text-align: center; font-size: 12px; color: #a9926f; margin-bottom: 22px; }
+  .success2 .id2 b { color: #007a8a; font-family: 'Playfair Display', serif; font-size: 15px; }
+  .details-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px;
+    border: 1px solid #e6ded1; border-radius: 14px; padding: 18px;
+  }
+  .details-grid .dg-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #a9926f; margin: 0 0 3px; }
+  .details-grid .dg-val { font-size: 14px; color: #2b2013; font-weight: 600; margin: 0; }
 </style>
 </head>
 <body>
@@ -160,6 +178,7 @@
 
         <label>RUT</label>
         <input type="text" id="rut" placeholder="12345678-9" inputmode="numeric" required>
+        <div class="field-err" id="errRut"></div>
 
         <div class="row">
           <div style="flex: 1.4;">
@@ -185,36 +204,33 @@
                 <input type="tel" id="telefono" placeholder="9 1234 5678" inputmode="numeric" required>
               </div>
             </div>
-          </div>
-          <div>
-            <label>Personas</label>
-            <input type="number" id="personas" min="1" max="100" required>
+            <div class="field-err" id="errTelefono"></div>
           </div>
         </div>
 
         <label>Correo electrónico</label>
         <input type="email" id="correo" required>
+        <div class="field-err" id="errCorreo"></div>
 
-        <label>Fecha</label>
-        <div class="cal-box">
-          <div class="cal-head">
-            <span class="cal-month" id="calMes"></span>
-            <div class="cal-nav">
-              <button type="button" id="calPrev">&#8249;</button>
-              <button type="button" id="calNext">&#8250;</button>
-            </div>
-          </div>
-          <div class="cal-grid" id="calGrid"></div>
+        <label>Personas</label>
+        <div class="stepper">
+          <button type="button" id="personasMenos">&#8722;</button>
+          <span id="personasVal">2</span>
+          <button type="button" id="personasMas">&#43;</button>
         </div>
+        <input type="hidden" id="personas" value="2" required>
+
+        <label style="margin-top:20px;">Fecha</label>
+        <div class="date-scroll" id="dateScroll"></div>
         <input type="hidden" id="fecha" required>
+        <div class="field-err" id="errFecha"></div>
 
-        <label style="margin-top:20px;">Hora</label>
-        <div class="time-box">
-          <div class="time-scroll" id="timeScroll"></div>
-        </div>
+        <label style="margin-top:16px;">Hora</label>
+        <div class="time-grid" id="timeGrid"></div>
         <input type="hidden" id="hora" required>
+        <div class="field-err" id="errHora"></div>
 
-        <label>Comentario (opcional)</label>
+        <label style="margin-top:16px;">Comentario (opcional)</label>
         <input type="text" id="nota" placeholder="Alergias, mascota, etc.">
 
         <button type="submit" id="btn">Confirmar reserva</button>
@@ -252,37 +268,157 @@ function formatearRut(valor) {
   }
   return cuerpoFormateado + '-' + dv;
 }
+
+// Validación real de RUT chileno (módulo 11).
+function rutValido(valor) {
+  const limpio = valor.replace(/[^0-9kK]/g, '').toUpperCase();
+  if (limpio.length < 2) return false;
+  const dv = limpio.slice(-1);
+  const cuerpo = limpio.slice(0, -1);
+  if (!/^\d+$/.test(cuerpo)) return false;
+  let suma = 0, multiplo = 2;
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += parseInt(cuerpo[i], 10) * multiplo;
+    multiplo = multiplo === 7 ? 2 : multiplo + 1;
+  }
+  const resto = 11 - (suma % 11);
+  let dvEsperado = resto === 11 ? '0' : resto === 10 ? 'K' : String(resto);
+  return dv === dvEsperado;
+}
+
+// Validación de correo: formato estándar + descarta dominios de un solo bloque (ej. "ehansen" sin @dominio.algo).
+function correoValido(valor) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(valor.trim());
+}
+
 const rutInput = document.getElementById('rut');
 rutInput.addEventListener('input', function() {
   const cursorAlFinal = this.selectionStart === this.value.length;
   this.value = formatearRut(this.value);
   if (cursorAlFinal) this.setSelectionRange(this.value.length, this.value.length);
 });
-
-// El teléfono solo acepta dígitos (el código de país va aparte, en el select).
-document.getElementById('telefono').addEventListener('input', function() {
-  this.value = this.value.replace(/[^0-9]/g, '');
+rutInput.addEventListener('blur', function() {
+  document.getElementById('errRut').textContent = (this.value && !rutValido(this.value)) ? 'RUT inválido, revisa el dígito verificador' : '';
 });
 
+// El teléfono solo acepta dígitos (el código de país va aparte, en el select).
+const telInput = document.getElementById('telefono');
+telInput.addEventListener('input', function() {
+  this.value = this.value.replace(/[^0-9]/g, '');
+});
+telInput.addEventListener('blur', function() {
+  document.getElementById('errTelefono').textContent = (this.value && this.value.length < 8) ? 'Teléfono incompleto' : '';
+});
+
+const correoInput = document.getElementById('correo');
+correoInput.addEventListener('blur', function() {
+  document.getElementById('errCorreo').textContent = (this.value && !correoValido(this.value)) ? 'Ingresa un correo válido (ej. nombre@dominio.com)' : '';
+});
+
+// --- Stepper de personas ---
+let personasN = 2;
+document.getElementById('personasVal').textContent = personasN;
+document.getElementById('personasMenos').addEventListener('click', () => {
+  if (personasN > 1) personasN--;
+  document.getElementById('personasVal').textContent = personasN;
+  document.getElementById('personas').value = personasN;
+});
+document.getElementById('personasMas').addEventListener('click', () => {
+  if (personasN < 30) personasN++;
+  document.getElementById('personasVal').textContent = personasN;
+  document.getElementById('personas').value = personasN;
+});
+
+// --- Fecha: pastillas horizontales (próximos 21 días) ---
+const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const MESES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DOW = ['dom','lun','mar','mié','jue','vie','sáb'];
+const hoyDate = new Date();
+hoyDate.setHours(0,0,0,0);
+let fechaSeleccionada = null;
+
+const dateScroll = document.getElementById('dateScroll');
+for (let i = 0; i < 21; i++) {
+  const d = new Date(hoyDate);
+  d.setDate(d.getDate() + i);
+  const fechaISO = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  const chip = document.createElement('button');
+  chip.type = 'button';
+  chip.className = 'date-chip';
+  chip.innerHTML = '<span class="dc-dow">' + (i === 0 ? 'Hoy' : DOW[d.getDay()]) + '</span><span class="dc-num">' + d.getDate() + ' ' + MESES[d.getMonth()] + '</span>';
+  chip.addEventListener('click', () => {
+    fechaSeleccionada = fechaISO;
+    document.getElementById('fecha').value = fechaISO;
+    document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+    document.getElementById('errFecha').textContent = '';
+  });
+  dateScroll.appendChild(chip);
+}
+
+// --- Hora: grid compacto (horario del local: L-V 7:30-21:00, Sáb-Dom-Festivos 9:00-21:00) ---
+const HORAS = [];
+for (let h = 8; h <= 20; h++) {
+  HORAS.push(String(h).padStart(2,'0') + ':00');
+  if (h < 20) HORAS.push(String(h).padStart(2,'0') + ':30');
+}
+const timeGrid = document.getElementById('timeGrid');
+HORAS.forEach(hora => {
+  const chip = document.createElement('button');
+  chip.type = 'button';
+  chip.className = 'time-chip';
+  chip.textContent = hora;
+  chip.addEventListener('click', () => {
+    document.getElementById('hora').value = hora;
+    document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+    document.getElementById('errHora').textContent = '';
+  });
+  timeGrid.appendChild(chip);
+});
+
+// --- Envío + validación final ---
 document.getElementById('form').addEventListener('submit', async function(e) {
   e.preventDefault();
   const btn = document.getElementById('btn');
   const msg = document.getElementById('msg');
-  btn.disabled = true;
-  btn.textContent = 'Enviando...';
   msg.textContent = '';
   msg.className = 'msg';
 
+  const nombre = document.getElementById('nombre').value.trim();
+  const rut = document.getElementById('rut').value.trim();
+  const telefono = document.getElementById('telefono').value.trim();
+  const correo = document.getElementById('correo').value.trim();
+  const fecha = document.getElementById('fecha').value;
+  const hora = document.getElementById('hora').value;
+
+  let valido = true;
+  if (!rutValido(rut)) { document.getElementById('errRut').textContent = 'RUT inválido, revisa el dígito verificador'; valido = false; }
+  if (telefono.length < 8) { document.getElementById('errTelefono').textContent = 'Teléfono incompleto'; valido = false; }
+  if (!correoValido(correo)) { document.getElementById('errCorreo').textContent = 'Ingresa un correo válido (ej. nombre@dominio.com)'; valido = false; }
+  if (!fecha) { document.getElementById('errFecha').textContent = 'Elige una fecha'; valido = false; }
+  if (!hora) { document.getElementById('errHora').textContent = 'Elige una hora'; valido = false; }
+  if (!valido) {
+    msg.textContent = 'Revisa los datos marcados en rojo.';
+    msg.className = 'msg err';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
   const idReserva = generarCodigo();
+  const personas = parseInt(document.getElementById('personas').value, 10);
+  const codPais = document.getElementById('cod_pais').value;
   const body = {
     id_reserva: idReserva,
-    nombre_contacto: document.getElementById('nombre').value.trim(),
-    rut: document.getElementById('rut').value.trim(),
-    whatsapp_contacto: document.getElementById('cod_pais').value + document.getElementById('telefono').value.trim(),
-    correo: document.getElementById('correo').value.trim().toLowerCase(),
-    personas: parseInt(document.getElementById('personas').value, 10),
-    fecha: document.getElementById('fecha').value,
-    hora: document.getElementById('hora').value,
+    nombre_contacto: nombre,
+    rut: rut,
+    whatsapp_contacto: codPais + telefono,
+    correo: correo.toLowerCase(),
+    personas: personas,
+    fecha: fecha,
+    hora: hora,
     nota: document.getElementById('nota').value.trim(),
     plataforma: plataformaOrigen,
     estado: 'activa'
@@ -301,16 +437,24 @@ document.getElementById('form').addEventListener('submit', async function(e) {
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
 
+    const fechaObj = new Date(fecha + 'T00:00:00');
+    const fechaLegible = fechaObj.getDate() + ' de ' + MESES_LARGO[fechaObj.getMonth()] + ' ' + fechaObj.getFullYear();
+
     document.getElementById('card').innerHTML = `
-      <div class="success">
-        <div class="icon">&#10003;</div>
-        <h2 class="title">Reserva confirmada</h2>
-        <p class="sub">Te esperamos en Casa Turquesa</p>
-        <div class="code-box">
-          <p class="code-label">Código de seguimiento</p>
-          <p class="code">${idReserva}</p>
+      <div class="success2">
+        <div class="icon2">&#10003;</div>
+        <h2>Hemos recibido tu reserva</h2>
+        <p class="sub2">Te esperamos en Casa Turquesa</p>
+        <p class="id2">Código de reserva<br><b>${idReserva}</b></p>
+        <div class="details-grid">
+          <div><p class="dg-label">Nombre</p><p class="dg-val">${nombre}</p></div>
+          <div><p class="dg-label">Fecha</p><p class="dg-val">${fechaLegible}</p></div>
+          <div><p class="dg-label">Hora</p><p class="dg-val">${hora} hrs</p></div>
+          <div><p class="dg-label">Personas</p><p class="dg-val">${personas}</p></div>
+          <div><p class="dg-label">Teléfono</p><p class="dg-val">${codPais} ${telefono}</p></div>
+          <div><p class="dg-label">Correo</p><p class="dg-val" style="font-size:12px;">${correo}</p></div>
         </div>
-        <p class="sub" style="margin-top:18px;">Guarda este código por si necesitas cancelar o modificar tu reserva.</p>
+        <p class="sub2" style="margin-top:18px;">Guarda tu código por si necesitas cancelar o modificar tu reserva.</p>
       </div>`;
   } catch (err) {
     msg.textContent = 'Hubo un problema al confirmar tu reserva. Intenta de nuevo o escríbenos al WhatsApp +56 9 3499 0617.';
@@ -318,87 +462,6 @@ document.getElementById('form').addEventListener('submit', async function(e) {
     btn.disabled = false;
     btn.textContent = 'Confirmar reserva';
   }
-});
-
-// --- Calendario visual ---
-const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-const DOW = ['L','M','M','J','V','S','D'];
-const hoyDate = new Date();
-hoyDate.setHours(0,0,0,0);
-let calAno = hoyDate.getFullYear();
-let calMesIdx = hoyDate.getMonth();
-let fechaSeleccionada = null;
-
-function renderCalendario() {
-  document.getElementById('calMes').textContent = MESES[calMesIdx] + ' ' + calAno;
-  const grid = document.getElementById('calGrid');
-  grid.innerHTML = '';
-  DOW.forEach(d => {
-    const el = document.createElement('div');
-    el.className = 'cal-dow';
-    el.textContent = d;
-    grid.appendChild(el);
-  });
-  const primerDia = new Date(calAno, calMesIdx, 1);
-  let offset = primerDia.getDay() - 1; // lunes = 0
-  if (offset < 0) offset = 6;
-  for (let i = 0; i < offset; i++) {
-    const el = document.createElement('div');
-    el.className = 'cal-day empty';
-    grid.appendChild(el);
-  }
-  const diasEnMes = new Date(calAno, calMesIdx + 1, 0).getDate();
-  for (let dia = 1; dia <= diasEnMes; dia++) {
-    const fechaISO = calAno + '-' + String(calMesIdx + 1).padStart(2,'0') + '-' + String(dia).padStart(2,'0');
-    const fechaObj = new Date(calAno, calMesIdx, dia);
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'cal-day';
-    btn.textContent = dia;
-    if (fechaObj < hoyDate) {
-      btn.classList.add('disabled');
-      btn.disabled = true;
-    } else {
-      btn.addEventListener('click', () => {
-        fechaSeleccionada = fechaISO;
-        document.getElementById('fecha').value = fechaISO;
-        renderCalendario();
-      });
-    }
-    if (fechaISO === fechaSeleccionada) btn.classList.add('selected');
-    grid.appendChild(btn);
-  }
-}
-document.getElementById('calPrev').addEventListener('click', () => {
-  calMesIdx--;
-  if (calMesIdx < 0) { calMesIdx = 11; calAno--; }
-  renderCalendario();
-});
-document.getElementById('calNext').addEventListener('click', () => {
-  calMesIdx++;
-  if (calMesIdx > 11) { calMesIdx = 0; calAno++; }
-  renderCalendario();
-});
-renderCalendario();
-
-// --- Chips de hora (horario del local: L-V 7:30-21:00, Sáb-Dom-Festivos 9:00-21:00) ---
-const HORAS = [];
-for (let h = 8; h <= 20; h++) {
-  HORAS.push(String(h).padStart(2,'0') + ':00');
-  if (h < 20) HORAS.push(String(h).padStart(2,'0') + ':30');
-}
-const timeScroll = document.getElementById('timeScroll');
-HORAS.forEach(hora => {
-  const chip = document.createElement('button');
-  chip.type = 'button';
-  chip.className = 'time-chip';
-  chip.textContent = hora;
-  chip.addEventListener('click', () => {
-    document.getElementById('hora').value = hora;
-    document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('selected'));
-    chip.classList.add('selected');
-  });
-  timeScroll.appendChild(chip);
 });
 </script>
 </body>
