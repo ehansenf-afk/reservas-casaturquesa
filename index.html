@@ -392,7 +392,7 @@ document.getElementById('form').addEventListener('submit', async function(e) {
     hora: hora,
     nota: document.getElementById('nota').value.trim(),
     plataforma: plataformaOrigen,
-    estado: 'activa'
+    estado: 'pendiente'
   };
 
   try {
@@ -421,8 +421,8 @@ document.getElementById('form').addEventListener('submit', async function(e) {
     document.getElementById('card').innerHTML = `
       <div class="success2">
         <div class="icon2">&#10003;</div>
-        <h2>Hemos recibido tu reserva</h2>
-        <p class="sub2">Te esperamos en Casa Turquesa</p>
+        <h2>Hemos recibido tu solicitud</h2>
+        <p class="sub2">Te confirmamos por WhatsApp a la brevedad</p>
         <p class="id2">Código de reserva<br><b>${idReserva}</b></p>
         <div class="details-grid">
           <div><p class="dg-label">Nombre</p><p class="dg-val">${nombre}</p></div>
@@ -432,7 +432,7 @@ document.getElementById('form').addEventListener('submit', async function(e) {
           <div><p class="dg-label">Teléfono</p><p class="dg-val">${codPais} ${telefono}</p></div>
           <div><p class="dg-label">Correo</p><p class="dg-val" style="font-size:12px;">${correo}</p></div>
         </div>
-        <p class="sub2" style="margin-top:18px;">Guarda tu código por si necesitas cancelar o modificar tu reserva.</p>
+        <p class="sub2" style="margin-top:18px;">Guarda tu código por si necesitas cancelar o consultar por tu solicitud.</p>
       </div>`;
   } catch (err) {
     msg.textContent = 'Hubo un problema al confirmar tu reserva. Intenta de nuevo o escríbenos al WhatsApp +56 9 3499 0617.';
